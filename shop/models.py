@@ -18,6 +18,10 @@ class Product(models.Model):
     def __str__(self):
         return self.title
     
+    def sale_product_price(self):
+        if self.is_discounted:
+            return self.price * 0.8
+
     class Meta:
         db_table='shop_products'
 

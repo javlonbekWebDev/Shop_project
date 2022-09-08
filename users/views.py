@@ -31,3 +31,22 @@ def sign_out(request):
     logout(request)
     return redirect('sign_in')
 
+
+def edit_profile(request):
+    form =EditProfileForm(request.POST, instance=request.user)
+    if form.is_valid():
+        form.save()
+        return redirect('product_list')
+    form = EditProfileForm(instance=request.user)
+    return render(request, 'edit_profile.html', {'form': form})
+
+from django.contrib.auth import update_session_auth_hash
+
+def reset_password(request):
+    form = ChangePasswordForm(request.user, request.POST)
+    if request.method == 'POST' and form.is_valid():
+        user = form.save()
+        update_session_auth_hash(request, user)
+        return redirect('sign_in')
+    form = ChangePasswordForm(request.user)
+    return render(request, 'reset_password.html', {'form': form})

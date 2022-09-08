@@ -1,3 +1,5 @@
+from re import search
+from turtle import title
 from django.shortcuts import render, redirect
 
 from .forms import OrderForm
@@ -12,11 +14,10 @@ def product_list(request):
     slides=Slide.objects.all()
     brands=Brand.objects.all()
     products=Product.objects.all()
-    products=products.filter(category=category) if category else products
-    products=products.filter(brand=brand) if brand else products
+    search=request.GET.get('search')
 
     product_id=request.GET.get('product')
-
+  
     if product_id:
         product=Product.objects.get(pk=product_id)
         cart_item=CartItem.objects.filter(product=product)
@@ -28,6 +29,9 @@ def product_list(request):
             item.quantity += 1
             item.save()
 
+    products=products.filter(category=category) if category else products
+    products=products.filter(brand=brand) if brand else products
+    products=products.filter(Q(title__icontains=search)| Q(description__icontains=search)) if search else products
     return render(request, 'product_list.html', {'categories':categories, 'brands':brands, 'products':products, 'slides':slides})
 
 
@@ -82,7 +86,7 @@ def create_order(request):
     cart_items=CartItem.objects.filter(customer=request.user)
     total_price=sum([item.total_price() for item in cart_items])
     amout=sum([item.quantity for item in cart_items])
-    form = OrderForm()
+    form = OrderForm(request.POST)
 
     if request.method=='POST' and form.is_valid():
         order=Order.objects.create(
@@ -102,3 +106,9 @@ def create_order(request):
         return redirect('cart')
 
     return render(request, 'order_creation_page.html', {'cart_items':cart_items, 'total_price':total_price, 'amout':amout, 'form':form})
+
+
+
+def orders(request):
+    orders_list = Order.objects.filter(customer=request.user)
+    return render(request, 'orders.html', {'orders': orders_list})
